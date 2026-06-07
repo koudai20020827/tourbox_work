@@ -1,0 +1,12 @@
+---- 2026-06-07 18:40:23 Shortcut Mapper.app launch ----
+Starting application
+2026-06-07 18:40:24.011 Python[85731:7984650] Error received in message reply handler: Connection invalid
+2026-06-07 18:40:24.011 Python[85731:7984652] Connection Invalid error for service com.apple.hiservices-xpcservice.
+---- 2026-06-07 18:46:20 Shortcut Mapper.app launch ----
+Starting application
+2026-06-07 18:46:21.313 Python[92148:8003621] Connection Invalid error for service com.apple.hiservices-xpcservice.
+2026-06-07 18:46:21.313 Python[92148:8003618] Error received in message reply handler: Connection invalid
+---- 2026-06-07 23:07:30 Shortcut Mapper.app launch ----
+Starting application
+This process is not trusted! Input event monitoring will not be possible until it is added to accessibility clients.
+2026-06-07 23:07:52.044 Python[18121:8411951] error messaging the mach port for IMKCFRunLoopWakeUpReliable

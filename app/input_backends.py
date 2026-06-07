@@ -12,12 +12,14 @@ class InputEvent:
     control_id: str
     label: str
     source: str = "keyboard"
+    raw: str = ""
 
     def to_dict(self) -> dict[str, str]:
         return {
             "control_id": self.control_id,
             "label": self.label,
             "source": self.source,
+            "raw": self.raw,
         }
 
 
@@ -103,18 +105,80 @@ class KeyboardBackend(InputBackend):
 
 
 class HidBackend(InputBackend):
-    name = "hid"
+    name = "tourbox-hid"
 
     def __init__(self) -> None:
         self.available = False
-        self.error = "hidapi decoder is not implemented yet"
+        self.error = ""
+        self.thread: threading.Thread | None = None
+        self.device = None
 
     def start(
         self,
         emit: Callable[[InputEvent], None],
         stop_event: threading.Event,
     ) -> None:
-        return
+        try:
+            import hid
+        except Exception as exc:  # pragma: no cover - optional native dependency
+            self.error = f"hidapi is not available: {exc}"
+            return
+
+        devices = hid.enumerate()
+        target = next((item for item in devices if self._looks_like_tourbox(item)), None)
+        if not target:
+            self.error = "TourBox HID device was not detected"
+            return
+
+        try:
+            self.device = hid.device()
+            self.device.open_path(target["path"])
+            self.device.set_nonblocking(True)
+        except Exception as exc:  # pragma: no cover - depends on local device
+            self.error = f"Could not open TourBox HID device: {exc}"
+            return
+
+        self.available = True
+        self.error = ""
+
+        def run() -> None:
+            while not stop_event.is_set():
+                try:
+                    report = self.device.read(64)
+                except Exception as exc:
+                    self.error = f"TourBox HID read failed: {exc}"
+                    break
+
+                if report:
+                    raw = bytes(report).hex()
+                    control_id = f"hid.{raw[:24]}"
+                    emit(
+                        InputEvent(
+                            control_id=control_id,
+                            label=f"HID {raw[:16]}",
+                            source=self.name,
+                            raw=raw,
+                        )
+                    )
+                else:
+                    time.sleep(0.01)
+
+        self.thread = threading.Thread(target=run, daemon=True)
+        self.thread.start()
+
+    def stop(self) -> None:
+        if self.device:
+            try:
+                self.device.close()
+            except Exception:
+                return
+
+    def _looks_like_tourbox(self, item: dict) -> bool:
+        text = " ".join(
+            str(item.get(key) or "")
+            for key in ["product_string", "manufacturer_string", "serial_number", "path"]
+        ).lower()
+        return "tourbox" in text or "tour box" in text
 
 
 class DemoDialBackend(InputBackend):

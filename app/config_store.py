@@ -10,12 +10,15 @@ class ConfigStore:
     def __init__(self, path: Path) -> None:
         self.path = path
 
-    def load(self) -> dict[str, Binding]:
+    def _read(self) -> dict:
         if not self.path.exists():
             return {}
 
         with self.path.open("r", encoding="utf-8") as file:
-            raw = json.load(file)
+            return json.load(file)
+
+    def load(self) -> dict[str, Binding]:
+        raw = self._read()
 
         bindings = raw.get("bindings", {})
         return {
@@ -23,7 +26,16 @@ class ConfigStore:
             for control_id, binding in bindings.items()
         }
 
-    def save(self, bindings: dict[str, Binding]) -> None:
+    def load_aliases(self) -> dict[str, str]:
+        raw = self._read()
+        aliases = raw.get("aliases", {})
+        return {
+            str(signal_id): str(control_id)
+            for signal_id, control_id in aliases.items()
+            if signal_id and control_id
+        }
+
+    def save(self, bindings: dict[str, Binding], aliases: dict[str, str] | None = None) -> None:
         payload = {
             "bindings": {
                 control_id: {
@@ -33,7 +45,9 @@ class ConfigStore:
                 for control_id, binding in sorted(bindings.items())
             }
         }
+        if aliases:
+            payload["aliases"] = dict(sorted(aliases.items()))
+
         with self.path.open("w", encoding="utf-8") as file:
             json.dump(payload, file, ensure_ascii=False, indent=2)
             file.write("\n")
-

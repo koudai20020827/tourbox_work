@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import glob
 import json
+import platform
 import subprocess
 from dataclasses import dataclass
 from typing import Any
@@ -33,12 +34,16 @@ class DeviceScanner:
     def scan(self) -> dict[str, Any]:
         serial_devices = self._scan_serial()
         usb_devices = self._scan_usb()
-        matched = [device for device in serial_devices + usb_devices if device.matched]
+        hid_devices = self._scan_hid()
+        all_devices = serial_devices + usb_devices + hid_devices
+        matched = [device for device in all_devices if device.matched]
         return {
             "connected": bool(matched),
+            "platform": platform.system(),
             "matched": [device.to_dict() for device in matched],
             "serial": [device.to_dict() for device in serial_devices],
             "usb": [device.to_dict() for device in usb_devices],
+            "hid": [device.to_dict() for device in hid_devices],
         }
 
     def _scan_serial(self) -> list[DeviceInfo]:
@@ -76,6 +81,9 @@ class DeviceScanner:
         return devices
 
     def _scan_usb(self) -> list[DeviceInfo]:
+        if platform.system() != "Darwin":
+            return []
+
         try:
             result = subprocess.run(
                 ["system_profiler", "SPUSBDataType", "-json"],
@@ -117,9 +125,42 @@ class DeviceScanner:
             if isinstance(child, dict):
                 self._walk_usb(child, devices)
 
+    def _scan_hid(self) -> list[DeviceInfo]:
+        try:
+            import hid
+        except Exception:
+            return []
+
+        devices: list[DeviceInfo] = []
+        for item in hid.enumerate():
+            manufacturer = str(item.get("manufacturer_string") or "")
+            product = str(item.get("product_string") or "")
+            serial = str(item.get("serial_number") or "")
+            vendor_id = self._hex_id(item.get("vendor_id"))
+            product_id = self._hex_id(item.get("product_id"))
+            path = item.get("path") or ""
+            if isinstance(path, bytes):
+                path = path.hex()
+            text = " ".join([manufacturer, product, serial, vendor_id, product_id, str(path)])
+            devices.append(
+                DeviceInfo(
+                    kind="hid",
+                    name=product or manufacturer or "HID Device",
+                    path=str(path),
+                    vendor_id=vendor_id,
+                    product_id=product_id,
+                    serial=serial,
+                    matched=self._looks_like_tourbox(text),
+                )
+            )
+        return devices
+
     def _looks_like_tourbox(self, text: str) -> bool:
         lowered = text.lower()
         return "tourbox" in lowered or "tour box" in lowered
 
     def _hex_id(self, value: int | None) -> str:
-        return f"0x{value:04x}" if value is not None else ""
+        try:
+            return f"0x{int(value):04x}" if value is not None else ""
+        except (TypeError, ValueError):
+            return ""

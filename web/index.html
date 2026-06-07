@@ -13,7 +13,12 @@
           <p class="eyebrow">Shortcut Mapper</p>
           <h1>ショートカット割り当て</h1>
         </div>
-        <button id="scanButton">再確認</button>
+        <div class="header-actions">
+          <button class="icon-button" id="themeButton" type="button" aria-label="ダークモード切り替え" title="ダークモード切り替え">
+            <span id="themeIcon">☾</span>
+          </button>
+          <button id="scanButton">再確認</button>
+        </div>
       </header>
 
       <section class="connection-card" id="connectionCard">
@@ -28,6 +33,10 @@
       </section>
 
       <section class="device-stage" aria-label="デバイス図">
+        <div class="tap-status" id="tapStatus">
+          <span class="tap-spark"></span>
+          <span id="tapStatusText">入力待機中</span>
+        </div>
         <svg class="device-art" viewBox="0 0 420 330" role="img" aria-label="ショートカット入力デバイス">
           <defs>
             <radialGradient id="bodyLight" cx="42%" cy="35%" r="78%">
@@ -138,6 +147,9 @@
           <g class="selection-halo" aria-hidden="true">
             <circle cx="0" cy="0" r="0" />
           </g>
+          <g class="tap-halo" aria-hidden="true">
+            <circle cx="0" cy="0" r="0" />
+          </g>
         </svg>
       </section>
 
@@ -147,6 +159,24 @@
           実機入力を追加
         </button>
         <button id="cancelCaptureButton">中止</button>
+      </section>
+
+      <section class="panel signal-panel">
+        <div class="section-head">
+          <div>
+            <h2>TourBox信号ログ</h2>
+            <p id="signalStatusText">実機入力を待っています</p>
+          </div>
+          <span class="signal-count" id="signalCount">0</span>
+        </div>
+        <div class="signal-live" id="signalLive">
+          <span class="signal-dot"></span>
+          <div>
+            <strong id="signalLiveTitle">NO SIGNAL</strong>
+            <span id="signalLiveDetail">TourBoxを操作するとここに信号が流れます</span>
+          </div>
+        </div>
+        <div id="signalList" class="signal-list"></div>
       </section>
 
       <section class="panel assignments-panel">

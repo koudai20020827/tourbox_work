@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from threading import Lock
 
@@ -17,6 +18,7 @@ class ShortcutApi:
         self.window = None
         self.store = ConfigStore(base_dir / "config.json")
         self.bindings = self.store.load()
+        self.control_aliases = self.store.load_aliases()
         self.observed_controls: dict[str, dict[str, str]] = {
             control_id: {"id": control_id, "label": binding.label}
             for control_id, binding in self.bindings.items()
@@ -31,7 +33,11 @@ class ShortcutApi:
         self.input_hub.add_backend(self.hid_backend)
         self.input_hub.add_backend(DemoDialBackend())
         self.capture_next = False
+        self.capture_target_id = ""
         self.log: list[dict[str, str]] = []
+        self.signal_log: list[dict[str, str]] = []
+        self.signal_count = 0
+        self.last_signal: dict[str, str] | None = None
         self.lock = Lock()
 
     def set_window(self, window) -> None:
@@ -52,6 +58,10 @@ class ShortcutApi:
             "status": self._status(),
             "devices": self.devices,
             "log": self.log[-80:],
+            "signal_log": self.signal_log[-160:],
+            "signal_count": self.signal_count,
+            "last_signal": self.last_signal,
+            "aliases": self.control_aliases,
         }
 
     def save_binding(self, control_id: str, label: str, keys: list[str]) -> dict:
@@ -66,7 +76,7 @@ class ShortcutApi:
         with self.lock:
             self.bindings[control_id] = binding
             self._remember_control(control_id, binding.label)
-            self.store.save(self.bindings)
+            self.store.save(self.bindings, self.control_aliases)
         self._log("config", f"Saved {binding.label}: {' + '.join(cleaned) or '(empty)'}")
         return self.get_state()
 
@@ -74,7 +84,14 @@ class ShortcutApi:
         with self.lock:
             self.bindings.pop(control_id, None)
             self.observed_controls.pop(control_id, None)
-            self.store.save(self.bindings)
+            aliases_to_delete = [
+                signal_id
+                for signal_id, target_id in self.control_aliases.items()
+                if target_id == control_id
+            ]
+            for signal_id in aliases_to_delete:
+                self.control_aliases.pop(signal_id, None)
+            self.store.save(self.bindings, self.control_aliases)
         self._log("config", f"Deleted binding: {control_id}")
         return self.get_state()
 
@@ -105,13 +122,18 @@ class ShortcutApi:
         self._log("device", f"Scan complete: {count} matching device(s)")
         return self.get_state()
 
-    def begin_capture(self) -> dict:
+    def begin_capture(self, target_control_id: str = "") -> dict:
         self.capture_next = True
-        self._log("capture", "Waiting for next keyboard-like input")
+        self.capture_target_id = target_control_id
+        if target_control_id:
+            self._log("capture", f"Waiting for TourBox signal for {self._label_for(target_control_id)}")
+        else:
+            self._log("capture", "Waiting for next TourBox signal")
         return self.get_state()
 
     def cancel_capture(self) -> dict:
         self.capture_next = False
+        self.capture_target_id = ""
         self._log("capture", "Capture cancelled")
         return self.get_state()
 
@@ -121,12 +143,40 @@ class ShortcutApi:
         return self.get_state()
 
     def _handle_event(self, event: InputEvent) -> None:
+        raw_event = event
+        self._record_signal(raw_event)
+
+        mapped_control_id = self.control_aliases.get(raw_event.control_id)
+        if mapped_control_id:
+            event = InputEvent(
+                control_id=mapped_control_id,
+                label=self._label_for(mapped_control_id),
+                source=raw_event.source,
+                raw=raw_event.raw,
+            )
+
         self._remember_control(event.control_id, event.label)
         self._notify({"type": "control", "event": event.to_dict()})
 
         if self.capture_next:
             self.capture_next = False
-            self._log("capture", f"Captured {event.label} as {event.control_id}")
+            if self.capture_target_id and raw_event.control_id != self.capture_target_id:
+                self.control_aliases[raw_event.control_id] = self.capture_target_id
+                self.store.save(self.bindings, self.control_aliases)
+                event = InputEvent(
+                    control_id=self.capture_target_id,
+                    label=self._label_for(self.capture_target_id),
+                    source=raw_event.source,
+                    raw=raw_event.raw,
+                )
+                self._remember_control(event.control_id, event.label)
+                self._log(
+                    "capture",
+                    f"Mapped {raw_event.control_id} to {event.label}",
+                )
+            else:
+                self._log("capture", f"Captured {raw_event.label} as {raw_event.control_id}")
+            self.capture_target_id = ""
             self._notify({"type": "captured", "event": event.to_dict()})
             return
 
@@ -164,11 +214,30 @@ class ShortcutApi:
             "hid_backend": self.hid_backend.available,
             "hid_error": self.hid_backend.error,
             "capture_next": self.capture_next,
+            "capture_target_id": self.capture_target_id,
+            "signal_count": self.signal_count,
+            "last_signal": self.last_signal,
         }
 
     def _log(self, source: str, message: str) -> None:
         self.log.append({"source": source, "message": message})
         self.log = self.log[-120:]
+
+    def _record_signal(self, event: InputEvent) -> None:
+        self.signal_count += 1
+        mapped = self.control_aliases.get(event.control_id, "")
+        item = {
+            "time": datetime.now().strftime("%H:%M:%S.%f")[:-3],
+            "source": event.source,
+            "control_id": event.control_id,
+            "label": event.label,
+            "raw": event.raw,
+            "mapped_control_id": mapped,
+            "mapped_label": self._label_for(mapped) if mapped else "",
+        }
+        self.signal_log.append(item)
+        self.signal_log = self.signal_log[-240:]
+        self.last_signal = item
 
     def _notify(self, payload: dict) -> None:
         if not self.window:

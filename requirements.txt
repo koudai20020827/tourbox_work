@@ -1,3 +1,4 @@
 pywebview>=5.4
 pynput>=1.8
 pyserial>=3.5
+hidapi>=0.14
