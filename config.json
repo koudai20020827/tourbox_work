@@ -1,0 +1,22 @@
+{
+  "bindings": {
+    "key.a": {
+      "label": "a",
+      "action": {
+        "keys": [
+          "cmd",
+          "c"
+        ]
+      }
+    },
+    "key.w": {
+      "label": "w",
+      "action": {
+        "keys": [
+          "cmd",
+          "v"
+        ]
+      }
+    }
+  }
+}

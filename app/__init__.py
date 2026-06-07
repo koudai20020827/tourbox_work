@@ -1,0 +1,1 @@
+"""Shortcut assignment prototype package."""

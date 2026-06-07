@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ショートカット割り当て</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Shortcut Mapper</p>
+          <h1>ショートカット割り当て</h1>
+        </div>
+        <button id="scanButton">再確認</button>
+      </header>
+
+      <section class="connection-card" id="connectionCard">
+        <div class="status-left">
+          <span class="status-dot"></span>
+          <div>
+            <strong id="connectionText">確認中</strong>
+            <p id="connectionSubtext">接続確認を実行しています</p>
+          </div>
+        </div>
+        <span class="device-count" id="deviceCount">0</span>
+      </section>
+
+      <section class="device-stage" aria-label="デバイス図">
+        <svg class="device-art" viewBox="0 0 420 330" role="img" aria-label="ショートカット入力デバイス">
+          <defs>
+            <radialGradient id="bodyLight" cx="42%" cy="35%" r="78%">
+              <stop offset="0" stop-color="#59646d" />
+              <stop offset="0.56" stop-color="#2f3841" />
+              <stop offset="1" stop-color="#151b22" />
+            </radialGradient>
+            <linearGradient id="edgeLight" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0" stop-color="#78848e" stop-opacity="0.7" />
+              <stop offset="1" stop-color="#111820" stop-opacity="0.35" />
+            </linearGradient>
+            <radialGradient id="buttonLight" cx="35%" cy="28%" r="75%">
+              <stop offset="0" stop-color="#eef3f6" />
+              <stop offset="0.58" stop-color="#b9c3cb" />
+              <stop offset="1" stop-color="#68737d" />
+            </radialGradient>
+            <radialGradient id="darkButton" cx="34%" cy="28%" r="72%">
+              <stop offset="0" stop-color="#56616b" />
+              <stop offset="0.62" stop-color="#252e37" />
+              <stop offset="1" stop-color="#111820" />
+            </radialGradient>
+            <filter id="deviceShadow" x="-20%" y="-20%" width="140%" height="150%">
+              <feDropShadow dx="0" dy="20" stdDeviation="18" flood-color="#071018" flood-opacity="0.32" />
+            </filter>
+            <filter id="controlLift" x="-40%" y="-40%" width="180%" height="180%">
+              <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#000" flood-opacity="0.28" />
+            </filter>
+          </defs>
+
+          <ellipse class="table-shadow" cx="210" cy="294" rx="145" ry="20" />
+          <path class="body-base" d="M61 76c34-32 91-45 148-41 79 5 140 34 171 92 29 54 22 118-15 149-30 25-74 25-127 16-33-6-60-4-92 4-45 11-80 4-105-23-26-29-33-79-25-121 6-34 20-57 45-76Z" filter="url(#deviceShadow)" />
+          <path class="body-rim" d="M70 82c32-27 84-38 137-35 73 5 128 31 156 83 26 49 19 104-14 132-27 22-67 22-116 13-32-5-60-4-90 4-40 9-70 4-92-20-23-26-30-71-23-108 6-29 19-49 42-69Z" />
+          <path class="body-gloss" d="M87 86c39-24 95-27 145-18 49 8 90 28 113 65 6 10 10 20 13 31-48-55-141-68-235-41-39 11-68 10-80-6 9-12 24-22 44-31Z" />
+
+          <g class="zone control" data-control-id="top" data-label="トップ">
+            <rect class="key cap-wide" x="151" y="62" width="84" height="31" rx="12" />
+          </g>
+
+          <g class="zone control" data-control-id="scroll.up" data-label="スクロール上">
+            <rect class="key scroll-wheel" x="95" y="92" width="30" height="69" rx="13" />
+            <path class="grooves" d="M110 103v14M110 123v14M110 143v8" />
+          </g>
+          <g class="zone control" data-control-id="scroll.down" data-label="スクロール下">
+            <rect class="hit-area" x="91" y="123" width="38" height="45" rx="16" />
+          </g>
+          <g class="zone control" data-control-id="scroll.click" data-label="スクロール押下">
+            <circle class="hidden-hit" cx="110" cy="128" r="22" />
+          </g>
+
+          <g class="zone control" data-control-id="side" data-label="サイド">
+            <rect class="key side-key" x="36" y="134" width="19" height="78" rx="9" />
+          </g>
+
+          <g class="zone control" data-control-id="dial.left" data-label="ダイヤル左">
+            <circle class="dial outer" cx="105" cy="230" r="48" />
+            <path class="dial-arc" d="M84 191a48 48 0 0 0-27 42 48 48 0 0 0 25 41" />
+          </g>
+          <g class="zone control" data-control-id="dial.right" data-label="ダイヤル右">
+            <path class="dial-arc" d="M126 191a48 48 0 0 1 27 42 48 48 0 0 1-25 41" />
+          </g>
+          <g class="zone control" data-control-id="dial.click" data-label="ダイヤル押下">
+            <circle class="dial core" cx="105" cy="230" r="30" />
+          </g>
+
+          <g class="zone control" data-control-id="tour" data-label="Tour">
+            <circle class="key small-round" cx="165" cy="164" r="18" />
+          </g>
+
+          <g class="zone control" data-control-id="knob.left" data-label="ノブ左">
+            <circle class="knob outer" cx="213" cy="127" r="39" />
+            <path class="knob-arc" d="M194 93a39 39 0 0 0-20 34 39 39 0 0 0 19 34" />
+          </g>
+          <g class="zone control" data-control-id="knob.right" data-label="ノブ右">
+            <path class="knob-arc" d="M232 93a39 39 0 0 1 20 34 39 39 0 0 1-19 34" />
+          </g>
+          <g class="zone control" data-control-id="knob.click" data-label="ノブ押下">
+            <circle class="knob core" cx="213" cy="127" r="23" />
+          </g>
+
+          <g class="zone control" data-control-id="c1" data-label="C1">
+            <circle class="key mini" cx="284" cy="116" r="16" />
+          </g>
+          <g class="zone control" data-control-id="c2" data-label="C2">
+            <circle class="key mini" cx="326" cy="121" r="16" />
+          </g>
+
+          <g class="zone control" data-control-id="tall" data-label="トール">
+            <rect class="key tall-key" x="273" y="190" width="45" height="73" rx="14" />
+            <path class="grooves" d="M287 210h16M287 226h16M287 242h16" />
+          </g>
+          <g class="zone control" data-control-id="short" data-label="ショート">
+            <rect class="key short-key" x="334" y="199" width="39" height="63" rx="15" />
+          </g>
+
+          <g class="zone control" data-control-id="dpad.up" data-label="上">
+            <path class="key dpad up" d="M199 184h27l11 11-24 24-25-24 11-11Z" />
+          </g>
+          <g class="zone control" data-control-id="dpad.right" data-label="右">
+            <path class="key dpad right" d="M237 222l24-24 11 11v27l-11 11-24-25Z" />
+          </g>
+          <g class="zone control" data-control-id="dpad.down" data-label="下">
+            <path class="key dpad down" d="M199 260l-11-11 25-24 24 24-11 11h-27Z" />
+          </g>
+          <g class="zone control" data-control-id="dpad.left" data-label="左">
+            <path class="key dpad left" d="M185 222l-24 25-11-11v-27l11-11 24 24Z" />
+          </g>
+
+          <g class="selection-halo" aria-hidden="true">
+            <circle cx="0" cy="0" r="0" />
+          </g>
+        </svg>
+      </section>
+
+      <section class="action-strip">
+        <button class="primary capture-button" id="captureButton">
+          <span class="record-dot"></span>
+          実機入力を追加
+        </button>
+        <button id="cancelCaptureButton">中止</button>
+      </section>
+
+      <section class="panel assignments-panel">
+        <div class="section-head">
+          <div>
+            <h2>登録済み入力</h2>
+            <p>ダブルクリックでショートカットを割り当て</p>
+          </div>
+          <span id="detectedCount">0件</span>
+        </div>
+        <div id="assignmentList" class="assignment-list"></div>
+      </section>
+
+      <dialog class="assign-dialog" id="assignDialog">
+        <form method="dialog" class="dialog-card">
+          <div class="editor-head">
+            <div>
+              <p class="eyebrow">Shortcut</p>
+              <h2 id="editorTitle">未選択</h2>
+              <p id="controlIdText">入力を登録してください</p>
+            </div>
+            <button class="icon-close" id="closeDialogButton" value="cancel" aria-label="閉じる">×</button>
+          </div>
+          <label>
+            表示名
+            <input id="controlLabel" placeholder="例: トップ" />
+          </label>
+          <label>
+            ショートカット
+            <input id="shortcutInput" placeholder="クリックして Cmd+Shift+P などを入力" />
+          </label>
+          <div class="shortcut-help">
+            <span>入力欄を選んでキーを押すと自動で記録します</span>
+            <button id="clearShortcutButton" type="button">クリア</button>
+          </div>
+          <div class="button-row">
+            <button class="primary" id="saveButton" type="button">保存</button>
+            <button id="testButton" type="button">実行</button>
+            <button class="danger" id="deleteButton" type="button">削除</button>
+          </div>
+        </form>
+      </dialog>
+
+      <section class="panel hint-panel">
+        <div class="section-head">
+          <div>
+            <h2>割り当て方法</h2>
+            <p>図をタップして追加、または実機入力を追加してから、登録済み入力をダブルクリックします。</p>
+          </div>
+        </div>
+      </section>
+
+      <details class="panel compact">
+        <summary>
+          <span>接続詳細</span>
+          <span id="deviceDetailCount">0</span>
+        </summary>
+        <div id="deviceList" class="device-list"></div>
+      </details>
+
+      <details class="panel compact">
+        <summary>
+          <span>ログ</span>
+          <button id="refreshButton">更新</button>
+        </summary>
+        <div id="log"></div>
+      </details>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
